@@ -200,7 +200,7 @@ export class Viewer {
         this.dirty = 0;
         this.lastRepaint = 0;
 
-        //        window._debugViewer = this;  // HACK for console debugging
+        //        //window._debugViewer = this;  // HACK for console debugging
 
         this.eventHandler = new EventHandler();
 
