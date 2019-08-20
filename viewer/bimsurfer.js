@@ -1,8 +1,12 @@
-import {BimServerViewer} from "./bimserverviewer.js";
-import {EventHandler} from "./eventhandler.js";
-// @todo why?
-import {BimServerClient} from "http://localhost:8080/apps/bimserverjavascriptapi/bimserverclient.js";
-import {Stats} from "./stats.js";
+import {
+	BimServerViewer
+} from "./bimserverviewer.js";
+import {
+	EventHandler
+} from "./eventhandler.js";
+import {
+	Stats
+} from "./stats.js";
 
 /**
  * Entry point for the public BimSurfer API.
@@ -12,15 +16,15 @@ import {Stats} from "./stats.js";
  * @extends {EventHandler}
  */
 export class BimSurfer extends EventHandler {
-    constructor(settings) {
-        super();
-        
-        this.settings = settings || {};
+	constructor(settings) {
+		super();
 
-        this._api = null;
-    }
+		this.settings = settings || {};
 
-    /**
+		this._api = null;
+	}
+
+	/**
 	 * Loads project meta-data} from a BIMserver and searches for the
 	 * specified revision id.
 	 * 
@@ -45,12 +49,12 @@ export class BimSurfer extends EventHandler {
 				}
 				if (!found) {
 					reject("Revision id not found");
-				}		
+				}
 			});
 		});
-    }
-    
-    /**
+	}
+
+	/**
 	 * @private
 	 * @param {Object} project Project meta-data object
 	 * @param {HTMLElement} domNode The parent HTMLElement in which to create a CANVAS for WebGL rendering
@@ -58,11 +62,11 @@ export class BimSurfer extends EventHandler {
 	 * @memberof BimSurfer
 	 */
 	loadModel(project, domNode) {
-		var stats = new Stats();		
+		var stats = new Stats();
 		stats.setParameter("Models", "Name", project.name);
-		
+
 		this._bimServerViewer = new BimServerViewer(this.settings, domNode, null, null, stats);
-		
+
 		this._bimServerViewer.setProgressListener((percentage) => {
 			console.log(percentage + "% loaded")
 		});
@@ -78,18 +82,18 @@ export class BimSurfer extends EventHandler {
 	 * @memberof BimSurfer
 	 */
 	loadRevision(roid, domNode) {
-		var stats = new Stats();		
-		
+		var stats = new Stats();
+
 		this._bimServerViewer = new BimServerViewer(this.settings, domNode, null, null, stats);
-		
+
 		this._bimServerViewer.setProgressListener((percentage) => {
 			console.log(percentage + "% loaded")
 		});
-		
+
 		return this._bimServerViewer.loadRevisionByRoid(roid);
 	}
 
-    /**
+	/**
 	 * Loads a BIMserver project into the specified domNode for rendering.
 	 * 
 	 * @param {{username: String, password: String, roid: Number, domNode: HTMLElement}} params Function arguments
@@ -99,12 +103,12 @@ export class BimSurfer extends EventHandler {
 	load(params) {
 		return new Promise((resolve, reject) => {
 			this._api = params.api;
-			this.loadProjects(params.roid).then((project)=>{                
+			this.loadProjects(params.roid).then((project) => {
 				this.loadModel(project, params.domNode).then(resolve).catch(reject);
 			}).catch(reject);
 		});
 	}
-	
+
 	/**
 	 * Sets the visibility for the specified elements
 	 *
@@ -152,11 +156,11 @@ export class BimSurfer extends EventHandler {
 		let v = this._bimServerViewer.viewer;
 		let clr = Array.from("rgba").map((x) => {
 			let v = params.color[x];
-			return typeof(v) === "undefined" ? 1. : v;
+			return typeof (v) === "undefined" ? 1. : v;
 		});
 		return v.setColor(params.ids, clr);
 	}
-	
+
 	/**
 	 * Resets the color for the specified elements (to their original color)
 	 *
@@ -229,7 +233,7 @@ export class BimSurfer extends EventHandler {
 			v.resetVisibility();
 		}
 	}
-	
+
 	/**
 	 * Add a handler which is called when an object is selected in the viewer
 	 *
@@ -239,7 +243,7 @@ export class BimSurfer extends EventHandler {
 	addSelectedHandler(handler) {
 		this._bimServerViewer.addSelectionListener(handler);
 	}
-	
+
 	cleanup() {
 		this._bimServerViewer.cleanup();
 	}
