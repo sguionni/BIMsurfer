@@ -890,10 +890,10 @@ export class Viewer {
         } else if (params.select !== false) {
             if (this.selectedElements.size > 0) {
                 this.selectedElements.clear();
-                this.eventHandler.fire("selection_state_changed", [], true);
+                this.eventHandler.fire("selection_state_changed", [], false);
             }
         } else {
-            this.eventHandler.fire("selection_state_changed", [], true);
+            this.eventHandler.fire("selection_state_changed", [], false);
         }
 
         return {
