@@ -889,9 +889,11 @@ export class Viewer {
             };
         } else if (params.select !== false) {
             if (this.selectedElements.size > 0) {
-                this.eventHandler.fire("selection_state_changed", this.selectedElements, false);
                 this.selectedElements.clear();
+                this.eventHandler.fire("selection_state_changed", [], true);
             }
+        } else {
+            this.eventHandler.fire("selection_state_changed", [], true);
         }
 
         return {
