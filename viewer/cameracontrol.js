@@ -36,23 +36,23 @@ export class CameraControl {
         };
 
         document.addEventListener("keydown", this.keyDownHandler = (e) => {
-        	this.keyEvent(e, "down");
+            this.keyEvent(e, "down");
         });
 
         document.addEventListener("keyup", this.keyUpHandler = (e) => {
-        	this.keyEvent(e, "up");
+            this.keyEvent(e, "up");
         });
 
         this.canvas.addEventListener("mousedown", this.canvasMouseDownHandler = (e) => {
-        	this.canvasMouseDown(e);
+            this.canvasMouseDown(e);
         });
 
         this.canvas.addEventListener("mouseup", this.canvasMouseUpHandler = (e) => {
-        	this.canvasMouseUp(e);
+            this.canvasMouseUp(e);
         });
 
         this.documentMouseUpHandler = (e) => {
-        	this.documentMouseUp(e);
+            this.documentMouseUp(e);
         };
         document.addEventListener("mouseup", this.documentMouseUpHandler);
 
@@ -67,11 +67,11 @@ export class CameraControl {
         });
 
         this.canvas.addEventListener("mousemove", this.canvasMouseMoveHandler = (e) => {
-        	this.canvasMouseMove(e);
+            this.canvasMouseMove(e);
         });
 
         this.canvas.addEventListener("wheel", this.canvasMouseWheelHandler = (e) => {
-        	this.canvasWheel(e);
+            this.canvasWheel(e);
         });
     }
 
@@ -84,15 +84,15 @@ export class CameraControl {
             canvasPos[0] = event.x;
             canvasPos[1] = event.y;
         } else {
-//            var element = event.target;
+            //            var element = event.target;
             var totalOffsetLeft = 0;
             var totalOffsetTop = 0;
-//            while (element.offsetParent) {
-//                totalOffsetLeft += element.offsetLeft;
-//                totalOffsetTop += element.offsetTop;
-//                element = element.offsetParent;
-//            }
-            
+            //            while (element.offsetParent) {
+            //                totalOffsetLeft += element.offsetLeft;
+            //                totalOffsetTop += element.offsetTop;
+            //                element = element.offsetParent;
+            //            }
+
             var rect = event.target.getBoundingClientRect();
             totalOffsetLeft = rect.left;
             totalOffsetTop = rect.top;
@@ -123,11 +123,11 @@ export class CameraControl {
         if (e.key == "Control") {
             if (state === "down") {
                 if (this.viewer.sectionPlaneIsDisabled) {
-                    this.viewer.positionSectionPlaneWidget({canvasPos: [this.lastX, this.lastY]});
+                    this.viewer.positionSectionPlaneWidget({ canvasPos: [this.lastX, this.lastY] });
                 }
             } else {
                 this.viewer.removeSectionPlaneWidget();
-            }            
+            }
         }
     }
 
@@ -145,57 +145,37 @@ export class CameraControl {
         this.mouseDownPos.set(this.mousePos);
 
         switch (e.which) {
-            case 1:                
+            case 1:
                 if (e.ctrlKey) {
                     this.mouseDownTime = 0;
-                    if (this.viewer.enableSectionPlane({canvasPos:[this.lastX, this.lastY]})) {
+                    if (this.viewer.enableSectionPlane({ canvasPos: [this.lastX, this.lastY] })) {
                         this.dragMode = DRAG_SECTION;
-                    } else if (!this.viewer.sectionPlaneIsDisabled){
+                    } else if (!this.viewer.sectionPlaneIsDisabled) {
                         this.viewer.disableSectionPlane();
                         this.dragMode = DRAG_ORBIT;
                     }
                     this.viewer.removeSectionPlaneWidget();
                 } else {
                     this.dragMode = DRAG_ORBIT;
-                    let picked = this.viewer.pick({canvasPos:[this.lastX, this.lastY], select:false});
-                    if (picked && picked.coordinates && picked.object) {
+                    let picked = this.viewer.pick({ canvasPos: [this.lastX, this.lastY], select: false });
+                    if (picked && picked.coordinates && picked.object && this.viewer.getSelected().length > 0) {
+
                         this.viewer.camera.center = picked.coordinates;
+
                     } else {
-                        // Check if we can 'see' the previous center. If not, pick
-                        // a new point.
-                        let center_vp = vec3.transformMat4(vec3.create(), this.viewer.camera.center, this.viewer.camera.viewProjMatrix);
-
-                        let isv = true;
-                        for (let i = 0; i < 3; ++i) {
-                            if (center_vp[i] < -1. || center_vp[i] > 1.) {
-                                isv = false;
-                                break;
-                            }
-                        }
-
-                        if (!isv) {
-                            let [x,y] = this.mousePos;
-                            vec3.set(center_vp, x / this.viewer.width * 2 - 1, - y / this.viewer.height * 2 + 1, 1.);
-                            vec3.transformMat4(center_vp, center_vp, this.camera.viewProjMatrixInverted);
-                            vec3.subtract(center_vp, center_vp, this.camera.eye);
-                            vec3.normalize(center_vp, center_vp);
-                            vec3.scale(center_vp, center_vp, this.getZoomRate() * 10.);
-                            vec3.add(center_vp, center_vp, this.camera.eye);
-                            console.log("new center", center_vp);
-                            this.viewer.camera.center = center_vp;
-                        }
+                        this.viewer.camera.center = vec3.create();
                     }
                 }
                 break;
             case 2:
-                this.dragMode = DRAG_PAN; 
+                this.dragMode = DRAG_PAN;
                 break;
             default:
                 break;
         }
         this.over = true;
         if (this.dragMode == DRAG_PAN || e.shiftKey) {
-        	e.preventDefault();
+            e.preventDefault();
         }
     }
 
@@ -212,7 +192,7 @@ export class CameraControl {
 
         switch (e.which) {
             case 1:
-            	if (dt < 500. && this.closeEnoughCanvas(this.mouseDownPos, this.mousePos)) {
+                if (dt < 500. && this.closeEnoughCanvas(this.mouseDownPos, this.mousePos)) {
                     var viewObject = this.viewer.pick({
                         canvasPos: this.mousePos,
                         shiftKey: e.shiftKey
@@ -262,9 +242,9 @@ export class CameraControl {
         if (this.mouseDown || e.ctrlKey) {
             this.getCanvasPosFromEvent(e, this.mousePos);
             if (this.dragMode == DRAG_SECTION) {
-                this.viewer.moveSectionPlane({canvasPos: this.mousePos});
+                this.viewer.moveSectionPlane({ canvasPos: this.mousePos });
             } else if (e.ctrlKey) {
-                this.viewer.positionSectionPlaneWidget({canvasPos: this.mousePos});
+                this.viewer.positionSectionPlaneWidget({ canvasPos: this.mousePos });
             } else {
                 var x = this.mousePos[0];
                 var y = this.mousePos[1];
@@ -295,9 +275,9 @@ export class CameraControl {
      */
     documentMouseUp(e) {
         this.mouseDown = false;
-    	// Potential end-of-pan
+        // Potential end-of-pan
         if (this.dragMode == DRAG_PAN) {
-        	this.camera.updateLowVolumeListeners();
+            this.camera.updateLowVolumeListeners();
         }
         this.dragMode = DRAG_ORBIT;
     }
@@ -312,7 +292,7 @@ export class CameraControl {
      */
     cleanup() {
         var canvas = this.canvas;
-    	document.removeEventListener("mouseup", this.documentMouseUpHandler);
+        document.removeEventListener("mouseup", this.documentMouseUpHandler);
         canvas.removeEventListener("mousedown", this.canvasMouseDownHandler);
         canvas.removeEventListener("mouseup", this.canvasMouseUpHandler);
         document.removeEventListener("mouseup", this.documentMouseUpHandler);
