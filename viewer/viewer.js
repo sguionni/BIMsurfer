@@ -227,6 +227,8 @@ export class Viewer {
             }
             this.drawScene();
         });
+
+        this.deltaTime = 0;
     }
 
     callByType(method, types, ...args) {
@@ -485,7 +487,7 @@ export class Viewer {
 
     render(now) {
         const seconds = now * 0.001;
-        const deltaTime = seconds - this.then;
+        const deltaTime = this.deltaTime = seconds - this.then;
         this.then = seconds;
 
         this.fps++;
@@ -545,7 +547,7 @@ export class Viewer {
 
         for (var renderLayer of this.renderLayers) {
             renderLayer.prepareRender(reason);
-            renderLayer.renderLines();            
+            renderLayer.renderLines();
         }
 
         gl.enable(gl.CULL_FACE);
@@ -1000,6 +1002,10 @@ export class Viewer {
     resetVisibility() {
         this.setVisibility(this.invisibleElements.keys(), true, false);
         this.dirty = 2;
+    }
+
+    toggleFlyMode(bool) {
+        this.cameraControl.toggleFlyMode(bool);
     }
 
     addSelectionListener(listener) {
