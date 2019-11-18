@@ -5,6 +5,7 @@ import * as vec2 from "./glmatrix/vec2.js";
 export const DRAG_ORBIT = 0xfe01;
 export const DRAG_PAN = 0xfe02;
 export const DRAG_SECTION = 0xfe03;
+export const FLY_MODE = 0xfe04;
 
 /**
  Controls the camera with user input.
@@ -27,8 +28,12 @@ export class CameraControl {
         this.over = false; // True when mouse over canvas
         this.lastX = 0; // Last canvas pos while dragging
         this.lastY = 0;
+        this.yaw = 0;
+        this.pitch = 0;
 
         this.mouseDown = false;
+        this.firstFlyMouse = true;
+
         this.dragMode = DRAG_ORBIT;
 
         this.canvas.oncontextmenu = (e) => {
@@ -118,23 +123,66 @@ export class CameraControl {
             return 1;
         }
     }
-
     keyEvent(e, state) {
-        if (e.key == "Control") {
-            if (state === "down") {
-                if (this.viewer.sectionPlaneIsDisabled) {
-                    this.viewer.positionSectionPlaneWidget({ canvasPos: [this.lastX, this.lastY] });
-                }
-            } else {
-                this.viewer.removeSectionPlaneWidget();
+        //this.viewer.deltaTime;
+        //var cameraSpeed = 100 * this.viewer.deltaTime;
+        if (state == "down") {
+            var cameraSpeed = 2.5;
+            switch (e.key) {
+                case "Control":
+                    if (state === "down") {
+                        if (this.viewer.sectionPlaneIsDisabled) {
+                            this.viewer.positionSectionPlaneWidget({ canvasPos: [this.lastX, this.lastY] });
+                        }
+                    } else {
+                        this.viewer.removeSectionPlaneWidget();
+                    }
+                    break;
+
+                case "ArrowLeft":
+                    // Left pressed
+                    var f = this.getEyeLookDist() / 600;
+                    this.camera.pan([cameraSpeed * f, 0.0, 0.0]);
+                    break;
+                case "ArrowRight":
+                    // Right pressed
+                    var f = this.getEyeLookDist() / 600;
+                    this.camera.pan([-(cameraSpeed * f), 0.0, 0.0]);
+                    break;
+                case "ArrowUp":
+                    // Up pressed
+                    var f = this.getEyeLookDist() / 600;
+                    this.camera.pan([0.0, 0.0, - (cameraSpeed * f)]);
+                    break;
+                case "ArrowDown":
+                    // Down pressed
+                    var f = this.getEyeLookDist() / 600;
+                    this.camera.pan([0.0, 0.0, (cameraSpeed * f)]);
+                    break;
+                case "q":
+                    /*if (this.dragMode !== FLY_MODE) {
+                        this.dragMode = FLY_MODE;
+                        this.firstFlyMouse = true;
+                        console.log("Welcome to the fly mode");
+                    } else {
+                        console.log("Exiting the fly mode");
+                        this.dragMode = DRAG_ORBIT;
+                    }*/
+                    break;
+                default:
+                    break;
             }
         }
+        e.preventDefault();
+
     }
 
     /**
      * @private
      */
     canvasMouseDown(e) {
+
+        console.log("In canvasMouseDown");
         this.getCanvasPosFromEvent(e, this.mousePos);
 
         this.lastX = this.mousePos[0];
@@ -146,29 +194,33 @@ export class CameraControl {
 
         switch (e.which) {
             case 1:
-                if (e.ctrlKey) {
-                    this.mouseDownTime = 0;
-                    if (this.viewer.enableSectionPlane({ canvasPos: [this.lastX, this.lastY] })) {
-                        this.dragMode = DRAG_SECTION;
-                    } else if (!this.viewer.sectionPlaneIsDisabled) {
-                        this.viewer.disableSectionPlane();
-                        this.dragMode = DRAG_ORBIT;
-                    }
-                    this.viewer.removeSectionPlaneWidget();
-                } else {
-                    this.dragMode = DRAG_ORBIT;
-                    let picked = this.viewer.pick({ canvasPos: [this.lastX, this.lastY], select: false });
-                    if (picked && picked.coordinates && picked.object && this.viewer.getSelected().length > 0) {
-
-                        this.viewer.camera.center = picked.coordinates;
-
+                if (this.dragMode == FLY_MODE) return;
+                else {
+                    if (e.ctrlKey) {
+                        this.mouseDownTime = 0;
+                        if (this.viewer.enableSectionPlane({ canvasPos: [this.lastX, this.lastY] })) {
+                            this.dragMode = DRAG_SECTION;
+                        } else if (!this.viewer.sectionPlaneIsDisabled) {
+                            this.viewer.disableSectionPlane();
+                            this.dragMode = DRAG_ORBIT;
+                        }
+                        this.viewer.removeSectionPlaneWidget();
                     } else {
-                        this.viewer.camera.center = vec3.create();
+                        this.dragMode = DRAG_ORBIT;
+                        let picked = this.viewer.pick({ canvasPos: [this.lastX, this.lastY], select: false });
+                        if (picked && picked.coordinates && picked.object && this.viewer.getSelected().length > 0) {
+
+                            this.viewer.camera.center = picked.coordinates;
+
+                        } else {
+                            this.viewer.camera.center = vec3.create();
+                        }
                     }
                 }
                 break;
             case 2:
                 this.dragMode = DRAG_PAN;
+                console.log("DragPan Activated, we're using the middle button");
                 break;
             default:
                 break;
@@ -183,6 +235,8 @@ export class CameraControl {
      * @private
      */
     canvasMouseUp(e) {
+        console.log("In canvasMouseUp");
+
         this.camera.orbitting = false;
         this.viewer.overlay.update();
         this.getCanvasPosFromEvent(e, this.mousePos);
@@ -240,6 +294,7 @@ export class CameraControl {
             return;
         }
         if (this.mouseDown || e.ctrlKey) {
+            console.log("Hey OH");
             this.getCanvasPosFromEvent(e, this.mousePos);
             if (this.dragMode == DRAG_SECTION) {
                 this.viewer.moveSectionPlane({ canvasPos: this.mousePos });
@@ -264,9 +319,76 @@ export class CameraControl {
                 } else if (this.dragMode == DRAG_PAN) {
                     var f = this.getEyeLookDist() / 600;
                     this.camera.pan([xDelta * f, yDelta * this.mousePanSensitivity * f, 0.0]);
+                } else if (this.dragMode == FLY_MODE) {
+                    let f = 0.02;
+                    if (xDelta !== 0) {
+                        this.yaw = -xDelta * this.mouseOrbitSensitivity * f;
+                        this.camera.yaw(-this.yaw);
+                    }
+                    if (yDelta !== 0) {
+                        this.pitch = -yDelta * this.mouseOrbitSensitivity * f;
+                        if (this.pitch > 89.0)
+                            this.pitch = 89.0;
+                        if (this.pitch < -89.0)
+                            this.pitch = -89.0;
+
+                        this.camera.pitch(-this.pitch);
+                    }
+                    /*
+                                        let f = 0.5;
+                                        if (xDelta !== 0) {
+                                            this.yaw = -xDelta * this.mouseOrbitSensitivity * f;
+                                            this.camera.yaw(this.yaw);
+                                        }
+                                        if (yDelta !== 0) {
+                                            this.pitch = -yDelta * this.mouseOrbitSensitivity * f;
+                                            if (this.pitch > 89.0)
+                                                this.pitch = 89.0;
+                                            if (this.pitch < -89.0)
+                                                this.pitch = -89.0;
+                    
+                                            this.camera.pitch(this.pitch);
+                                        }*/
                 }
             }
         }
+
+        if (this.dragMode == FLY_MODE) {
+            this.getCanvasPosFromEvent(e, this.mousePos);
+            console.log("Moving in fly mode");
+
+            if (this.firstFlyMouse) // this bool variable is initially set to true
+            {
+                console.log("First Time for the mouse position, not to cray");
+                this.lastX = this.mousePos[0];
+                this.lastY = this.mousePos[1];
+                this.firstFlyMouse = false;
+            }
+
+            console.log("Position en mouse de ", this.mousePos[0]);
+
+            var x = this.mousePos[0];
+            var y = this.mousePos[1];
+            var xDelta = (x - this.lastX);
+            var yDelta = (y - this.lastY);
+            this.lastX = x;
+            this.lastY = y;
+            let f = 0.035;
+            if (xDelta !== 0) {
+                this.yaw = -xDelta * this.mouseOrbitSensitivity * f;
+                this.camera.yaw(this.yaw);
+            }
+            if (yDelta !== 0) {
+                this.pitch = -yDelta * this.mouseOrbitSensitivity * f;
+                if (this.pitch > 89.0)
+                    this.pitch = 89.0;
+                if (this.pitch < -89.0)
+                    this.pitch = -89.0;
+
+                this.camera.pitch(this.pitch);
+            }
+        }
+
         e.preventDefault();
     }
 
@@ -274,17 +396,30 @@ export class CameraControl {
      * @private
      */
     documentMouseUp(e) {
+        console.log("In documentMouseUp");
+
         this.mouseDown = false;
         // Potential end-of-pan
         if (this.dragMode == DRAG_PAN) {
             this.camera.updateLowVolumeListeners();
         }
-        this.dragMode = DRAG_ORBIT;
+        this.dragMode = (this.dragMode == FLY_MODE) ? FLY_MODE : DRAG_ORBIT;
     }
 
     getEyeLookDist() {
         var vec = vec3.create();
         return vec3.length(vec3.subtract(vec, this.viewer.camera.target, this.viewer.camera.eye));
+    }
+
+    toggleFlyMode(bool) {
+        if (bool) {
+            this.dragMode = FLY_MODE;
+            this.firstFlyMouse = true;
+            console.log("Welcome to the fly mode");
+        } else {
+            console.log("Exiting the fly mode");
+            this.dragMode = DRAG_ORBIT;
+        }
     }
 
     /**
