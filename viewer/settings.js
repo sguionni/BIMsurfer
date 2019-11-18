@@ -20,7 +20,7 @@ export class Settings {
 			loaderSettings: {
 				quantizeNormals: "boolean",
 				octEncodeNormals: "boolean",
-				quantizeVertices: "boolean", 
+				quantizeVertices: "boolean",
 				quantizeColors: "boolean",
 				useObjectColors: "boolean",
 				tilingLayerReuse: "boolean",
@@ -34,7 +34,7 @@ export class Settings {
 				loadAllTiles: "button"
 			}
 		};
-		
+
 		var settingsObject = window.localStorage.getItem("settings") == null ? null : window.localStorage.getItem("settings");
 		this.settings = settingsObject == null ? {
 			quantizeNormals: true,
@@ -49,7 +49,7 @@ export class Settings {
 			maxOctreeDepth: 3,
 			loaderSettings: {
 				quantizeNormals: true,
-				octEncodeNormals: false,
+				octEncodeNormals: true,
 				quantizeVertices: true,
 				quantizeColors: true,
 				useObjectColors: false,
@@ -67,21 +67,21 @@ export class Settings {
 
 		this.processSettings(element, settingsDefinition, null, this.settings);
 	}
-	
+
 	saveSettings() {
 		window.localStorage.setItem("settings", JSON.stringify(this.settings));
 	}
-	
+
 	processSettings(parent, settingsDefinition, keyPrefix, settings) {
 		for (var key in settingsDefinition) {
 			var value = settingsDefinition[key];
 			if (typeof value == "string") {
 				var div = document.createElement("div");
 				div.classList.add("link");
-				
+
 				var label = document.createElement("label");
 				label.innerHTML = key;
-				if (key in {quantizeNormals: 1, quantizeVertices: 1}) {
+				if (key in { quantizeNormals: 1, quantizeVertices: 1 }) {
 					label.innerHTML += " (required for instancing)";
 				}
 				if (key == "tilingLayerReuse") {
@@ -90,7 +90,7 @@ export class Settings {
 				parent.appendChild(label);
 				var id = (keyPrefix == null ? "" : (keyPrefix + ".")) + key;
 				label.setAttribute("for", id);
-				
+
 				if (value == "button") {
 					var input = document.createElement("button");
 					label.hidden = true;
@@ -146,26 +146,26 @@ export class Settings {
 						this[key](el.checked);
 					}
 				});
-				
+
 				div.appendChild(input);
 				div.appendChild(label);
-				
+
 				parent.appendChild(div);
 			} else if (typeof value == "object") {
 				var newParent = document.createElement("div");
-				
+
 				var title = document.createElement("span");
 				title.innerHTML = key.charAt(0).toUpperCase() + key.substr(1).replace(/([A-Z])/g, " $1")
-				
+
 				newParent.appendChild(title);
-				
+
 				var container = document.createElement("div");
 				container.style["padding-left"] = "20px";
 				newParent.appendChild(container);
-				
+
 				parent.appendChild(document.createElement("hr"));
 				parent.appendChild(newParent);
-				
+
 				if (settings[key] == null) {
 					settings[key] = {};
 				}
@@ -173,7 +173,7 @@ export class Settings {
 			}
 		}
 	}
-	
+
 	loadAllTiles() {
 		if (window.tilingRenderLayer != null) {
 			window.tilingRenderLayer.tileLoader.loadAll();
@@ -181,7 +181,7 @@ export class Settings {
 			alert("No tiling layer");
 		}
 	}
-	
+
 	drawTileBorders(value) {
 		if (window.tilingRenderLayer != null) {
 			window.tilingRenderLayer.drawTileBorders = value;

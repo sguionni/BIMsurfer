@@ -1,18 +1,18 @@
 import * as mat4 from "./glmatrix/mat4.js";
 import * as vec3 from "./glmatrix/vec3.js";
 
-import {GeometryLoader} from "./geometryloader.js";
-import {BimserverGeometryLoader} from "./bimservergeometryloader.js";
-import {Viewer} from "./viewer.js";
-import {DefaultRenderLayer} from "./defaultrenderlayer.js";
-import {TilingRenderLayer} from "./tilingrenderlayer.js";
-import {VertexQuantization} from "./vertexquantization.js";
-import {Executor} from "./executor.js";
-import {Stats} from "./stats.js";
-import {DefaultSettings} from "./defaultsettings.js";
-import {Utils} from "./utils.js";
-import {DataInputStream} from "./datainputstream.js";
-import {AbstractViewer} from "./abstractviewer.js";
+import { GeometryLoader } from "./geometryloader.js";
+import { BimserverGeometryLoader } from "./bimservergeometryloader.js";
+import { Viewer } from "./viewer.js";
+import { DefaultRenderLayer } from "./defaultrenderlayer.js";
+import { TilingRenderLayer } from "./tilingrenderlayer.js";
+import { VertexQuantization } from "./vertexquantization.js";
+import { Executor } from "./executor.js";
+import { Stats } from "./stats.js";
+import { DefaultSettings } from "./defaultsettings.js";
+import { Utils } from "./utils.js";
+import { DataInputStream } from "./datainputstream.js";
+import { AbstractViewer } from "./abstractviewer.js";
 
 /*
  * The main class you instantiate when creating a viewer that will be loading data from a BIMserver.
@@ -42,7 +42,7 @@ export class BimServerViewer extends AbstractViewer {
 			});
 		});
 	}
-	
+
 	unloadRevisionByRoid(roid) {
 		const layerSet = this.layers.get(roid);
 		if (layerSet) {
@@ -52,7 +52,7 @@ export class BimServerViewer extends AbstractViewer {
 		}
 		this.layers.delete(roid);
 		this.viewer.dirty = 2;
-		
+
 		// TODO probably a good idea to also shrink the model bounds
 	}
 
@@ -73,11 +73,11 @@ export class BimServerViewer extends AbstractViewer {
 			});
 		});
 	}
-	
+
 	loadRevision(revision) {
 		this.loadRevisionByRoid(revision.oid);
 	}
-	
+
 	/*
 	 * This will load a BIMserver project. The given argument must be a Project object that is returned by the BIMserver JavaScript API.
 	 * 
@@ -118,7 +118,7 @@ export class BimServerViewer extends AbstractViewer {
 				this.densityThreshold = densityAtThreshold.density;
 				var nrPrimitivesBelow = densityAtThreshold.trianglesBelow;
 				var nrPrimitivesAbove = densityAtThreshold.trianglesAbove;
-				
+
 				api.call("ServiceInterface", "getRevision", {
 					roid: roid
 				}, (revision) => {
@@ -127,7 +127,7 @@ export class BimServerViewer extends AbstractViewer {
 			});
 		});
 	}
-	
+
 	/*
 	 * Private method
 	 */
@@ -138,8 +138,8 @@ export class BimServerViewer extends AbstractViewer {
 
 			this.viewer.stats.setParameter("Models", "Models to load", 1);
 
-	//		console.log("Total triangles", nrPrimitivesBelow + nrPrimitivesAbove);
-			
+			//		console.log("Total triangles", nrPrimitivesBelow + nrPrimitivesAbove);
+
 			var requests = [
 				["ServiceInterface", "getTotalBounds", {
 					roids: [revision.oid]
@@ -148,7 +148,7 @@ export class BimServerViewer extends AbstractViewer {
 					roids: [revision.oid]
 				}]
 			];
-			
+
 			if (this.settings.gpuReuse) {
 				requests.push(["ServiceInterface", "getGeometryDataToReuse", {
 					roids: [revision.oid],
@@ -156,7 +156,7 @@ export class BimServerViewer extends AbstractViewer {
 					trianglesToSave: 0
 				}]);
 			}
-			
+
 			for (var croid of revision.concreteRevisions) {
 				requests.push(["ServiceInterface", "getModelBoundsUntransformedForConcreteRevision", {
 					croid: croid
@@ -171,24 +171,24 @@ export class BimServerViewer extends AbstractViewer {
 			api.multiCall(requests, (responses) => {
 				var totalBounds = responses[0].result;
 				var totalBoundsUntransformed = responses[1].result;
-//				console.log(totalBounds, totalBoundsUntransformed);
+				//				console.log(totalBounds, totalBoundsUntransformed);
 				if (this.settings.gpuReuse) {
 					this.geometryDataIdsToReuse = new Set(responses[2].result);
 				} else {
 					this.geometryDataIdsToReuse = new Set(); // TODO later make this null, nicer
 				}
-	//			console.log("Geometry Data IDs to reuse", this.geometryDataIdsToReuse);
+				//			console.log("Geometry Data IDs to reuse", this.geometryDataIdsToReuse);
 
 				var add = this.settings.gpuReuse ? 3 : 2;
 				var modelBoundsUntransformed = new Map();
-				for (var i=0; i<(responses.length - add) / 2; i++) {
+				for (var i = 0; i < (responses.length - add) / 2; i++) {
 					modelBoundsUntransformed.set(revision.concreteRevisions[i], responses[i + add].result);
 				}
 				var modelBoundsTransformed = new Map();
-				for (var i=0; i<(responses.length - add) / 2; i++) {
+				for (var i = 0; i < (responses.length - add) / 2; i++) {
 					modelBoundsTransformed.set(revision.concreteRevisions[i], responses[(responses.length - add) / 2 + i + add].result);
 				}
-				
+
 				var bounds = [
 					totalBounds.min.x,
 					totalBounds.min.y,
@@ -197,12 +197,12 @@ export class BimServerViewer extends AbstractViewer {
 					totalBounds.max.y,
 					totalBounds.max.z,
 				];
-				
+
 				// globalTranslationVector is a translation vector that puts the complete model close to 0, 0, 0
 				if (this.viewer.globalTranslationVector == null) {
 					this.viewer.globalTranslationVector = vec3.fromValues(
-						-(bounds[0] + (bounds[3] - bounds[0]) / 2), 
-						-(bounds[1] + (bounds[4] - bounds[1]) / 2), 
+						-(bounds[0] + (bounds[3] - bounds[0]) / 2),
+						-(bounds[1] + (bounds[4] - bounds[1]) / 2),
 						-(bounds[2] + (bounds[5] - bounds[2]) / 2));
 				}
 
@@ -215,7 +215,7 @@ export class BimServerViewer extends AbstractViewer {
 					}
 					this.viewer.vertexQuantization.generateMatrices(totalBounds, totalBoundsUntransformed, this.viewer.globalTranslationVector);
 				}
-				
+
 				this.viewer.stats.inc("Primitives", "Primitives to load (L1)", nrPrimitivesBelow);
 				this.viewer.stats.inc("Primitives", "Primitives to load (L2)", nrPrimitivesAbove);
 
@@ -224,7 +224,7 @@ export class BimServerViewer extends AbstractViewer {
 				vec3.add(min, min, this.viewer.globalTranslationVector);
 				vec3.add(max, max, this.viewer.globalTranslationVector);
 				this.viewer.setModelBounds([min[0], min[1], min[2], max[0], max[1], max[2]]);
-				
+
 				// TODO This is very BIMserver specific, clutters the code, should move somewhere else (maybe BimserverGeometryLoader)
 				var fieldsToInclude = ["indices"];
 				fieldsToInclude.push("colorPack");
@@ -255,12 +255,12 @@ export class BimServerViewer extends AbstractViewer {
 					fieldsToInclude.push("colorsQuantized");
 					fieldsToInclude.push("colorsQuantized");
 				}
-				
+
 				var promise = Promise.resolve();
-				
+
 				const layerSet = new Set();
 				this.layers.set(revision.oid, layerSet);
-				
+
 				if (this.viewer.settings.defaultLayerEnabled && nrPrimitivesBelow) {
 					var defaultRenderLayer = new DefaultRenderLayer(this.viewer, this.geometryDataIdsToReuse);
 					layerSet.add(defaultRenderLayer);
@@ -281,7 +281,7 @@ export class BimServerViewer extends AbstractViewer {
 						var tilingRenderLayer = new TilingRenderLayer(this.viewer, this.geometryDataIdsToReuse, bounds);
 						layerSet.add(tilingRenderLayer);
 						this.viewer.renderLayers.add(tilingRenderLayer);
-						
+
 						tilingPromise = this.loadTilingLayer(api, tilingRenderLayer, revision, bounds, fieldsToInclude);
 					}
 					tilingPromise.then(() => {
@@ -297,9 +297,9 @@ export class BimServerViewer extends AbstractViewer {
 			});
 		});
 	}
-	
+
 	loadDefaultLayer(api, defaultRenderLayer, roid, fieldsToInclude) {
-//		document.getElementById("progress").style.display = "block";
+		//		document.getElementById("progress").style.display = "block";
 		var startLayer1 = performance.now();
 
 		var start = performance.now();
@@ -308,7 +308,11 @@ export class BimServerViewer extends AbstractViewer {
 		const loaderSettings = JSON.parse(JSON.stringify(this.settings.loaderSettings)); // copy
 
 		loaderSettings.globalTranslationVector = Utils.toArray(this.viewer.globalTranslationVector);
-		
+
+		if (loaderSettings.octEncodeNormals != null) {
+			delete loaderSettings.octEncodeNormals;
+		}
+
 		var query = {
 			type: {
 				name: "IfcProduct",
@@ -337,11 +341,11 @@ export class BimServerViewer extends AbstractViewer {
 			},
 			loaderSettings: loaderSettings
 		};
-		
+
 		if (this.settings.loaderSettings.quantizeVertices) {
 			query.loaderSettings.vertexQuantizationMatrix = this.viewer.vertexQuantization.vertexQuantizationMatrixWithGlobalTranslation;
 		}
-		
+
 		var geometryLoader = new BimserverGeometryLoader(0, api, defaultRenderLayer, [roid], this.settings.loaderSettings, null, this.stats, this.settings, query, null, defaultRenderLayer.gpuBufferManager);
 		if (this.settings.loaderSettings.quantizeVertices) {
 			geometryLoader.unquantizationMatrix = this.viewer.vertexQuantization.inverseVertexQuantizationMatrixWithGlobalTranslation;
@@ -351,7 +355,7 @@ export class BimServerViewer extends AbstractViewer {
 			defaultRenderLayer.done(geometryLoader.loaderId);
 			this.viewer.stats.inc("Models", "Models loaded", 1);
 		});
-		
+
 		executor.awaitTermination().then(() => {
 			this.viewer.stats.setParameter("Loading time", "Layer 1", performance.now() - start);
 			defaultRenderLayer.completelyDone();
