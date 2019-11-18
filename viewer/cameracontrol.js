@@ -181,8 +181,6 @@ export class CameraControl {
      * @private
      */
     canvasMouseDown(e) {
-
-        console.log("In canvasMouseDown");
         this.getCanvasPosFromEvent(e, this.mousePos);
 
         this.lastX = this.mousePos[0];
@@ -220,7 +218,6 @@ export class CameraControl {
                 break;
             case 2:
                 this.dragMode = DRAG_PAN;
-                console.log("DragPan Activated, we're using the middle button");
                 break;
             default:
                 break;
@@ -235,7 +232,6 @@ export class CameraControl {
      * @private
      */
     canvasMouseUp(e) {
-        console.log("In canvasMouseUp");
 
         this.camera.orbitting = false;
         this.viewer.overlay.update();
@@ -294,7 +290,6 @@ export class CameraControl {
             return;
         }
         if (this.mouseDown || e.ctrlKey) {
-            console.log("Hey OH");
             this.getCanvasPosFromEvent(e, this.mousePos);
             if (this.dragMode == DRAG_SECTION) {
                 this.viewer.moveSectionPlane({ canvasPos: this.mousePos });
@@ -355,17 +350,13 @@ export class CameraControl {
 
         if (this.dragMode == FLY_MODE) {
             this.getCanvasPosFromEvent(e, this.mousePos);
-            console.log("Moving in fly mode");
 
             if (this.firstFlyMouse) // this bool variable is initially set to true
             {
-                console.log("First Time for the mouse position, not to cray");
                 this.lastX = this.mousePos[0];
                 this.lastY = this.mousePos[1];
                 this.firstFlyMouse = false;
             }
-
-            console.log("Position en mouse de ", this.mousePos[0]);
 
             var x = this.mousePos[0];
             var y = this.mousePos[1];
@@ -396,8 +387,6 @@ export class CameraControl {
      * @private
      */
     documentMouseUp(e) {
-        console.log("In documentMouseUp");
-
         this.mouseDown = false;
         // Potential end-of-pan
         if (this.dragMode == DRAG_PAN) {
@@ -415,9 +404,7 @@ export class CameraControl {
         if (bool) {
             this.dragMode = FLY_MODE;
             this.firstFlyMouse = true;
-            console.log("Welcome to the fly mode");
         } else {
-            console.log("Exiting the fly mode");
             this.dragMode = DRAG_ORBIT;
         }
     }
