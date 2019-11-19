@@ -30,6 +30,25 @@ export class CameraControl {
         this.lastY = 0;
         this.yaw = 0;
         this.pitch = 0;
+        this.cameraSpeed = 1.3;
+
+        this.flyModeKeys = {
+            ArrowLeft: (pan) => {
+                this.camera.pan([pan, 0.0, 0.0]);
+            },
+            ArrowRight: (pan) => {
+                this.camera.pan([- pan, 0.0, 0.0]);
+            },
+            ArrowUp: (pan) => {
+                this.camera.pan([0.0, 0.0, - pan]);
+            },
+            ArrowDown: (pan) => {
+                this.camera.pan([0.0, 0.0, pan]);
+            }
+        };
+        this.timers = {};
+        this.repeat = 10;
+
 
         this.mouseDown = false;
         this.firstFlyMouse = true;
@@ -78,6 +97,10 @@ export class CameraControl {
         this.canvas.addEventListener("wheel", this.canvasMouseWheelHandler = (e) => {
             this.canvasWheel(e);
         });
+
+        this.canvas.addEventListener("blur", this.canvasBlurHandler = (e) => {
+            this.canvasBlur(e);
+        });
     }
 
     /**
@@ -124,10 +147,7 @@ export class CameraControl {
         }
     }
     keyEvent(e, state) {
-        //this.viewer.deltaTime;
-        //var cameraSpeed = 100 * this.viewer.deltaTime;
         if (state == "down") {
-            var cameraSpeed = 2.5;
             switch (e.key) {
                 case "Control":
                     if (state === "down") {
@@ -138,41 +158,24 @@ export class CameraControl {
                         this.viewer.removeSectionPlaneWidget();
                     }
                     break;
-
-                case "ArrowLeft":
-                    // Left pressed
-                    var f = this.getEyeLookDist() / 600;
-                    this.camera.pan([cameraSpeed * f, 0.0, 0.0]);
-                    break;
-                case "ArrowRight":
-                    // Right pressed
-                    var f = this.getEyeLookDist() / 600;
-                    this.camera.pan([-(cameraSpeed * f), 0.0, 0.0]);
-                    break;
-                case "ArrowUp":
-                    // Up pressed
-                    var f = this.getEyeLookDist() / 600;
-                    this.camera.pan([0.0, 0.0, - (cameraSpeed * f)]);
-                    break;
-                case "ArrowDown":
-                    // Down pressed
-                    var f = this.getEyeLookDist() / 600;
-                    this.camera.pan([0.0, 0.0, (cameraSpeed * f)]);
-                    break;
-                case "q":
-                    /*if (this.dragMode !== FLY_MODE) {
-                        this.dragMode = FLY_MODE;
-                        this.firstFlyMouse = true;
-                        console.log("Welcome to the fly mode");
-                    } else {
-                        console.log("Exiting the fly mode");
-                        this.dragMode = DRAG_ORBIT;
-                    }*/
-                    break;
                 default:
                     break;
             }
+            if ((e.key in this.flyModeKeys) && !(e.key in this.timers)) {
+                this.timers[e.key] = null;
+                this.flyModeKeys[e.key](this.getEyeLookDist() / 600 * this.cameraSpeed);
+                if (this.repeat !== 0) {
+                    this.timers[e.key] = window.setInterval(this.flyModeKeys[e.key], this.repeat, (this.getEyeLookDist() / 600) * this.cameraSpeed);
+                }
+            }
+        } else if (state == "up") {
+            if (e.key in this.timers) {
+                if (this.timers[e.key] !== null)
+                    clearInterval(this.timers[e.key]);
+                delete this.timers[e.key];
+            }
         }
+
         e.preventDefault();
 
     }
@@ -393,6 +396,13 @@ export class CameraControl {
             this.camera.updateLowVolumeListeners();
         }
         this.dragMode = (this.dragMode == FLY_MODE) ? FLY_MODE : DRAG_ORBIT;
+    }
+
+    canvasBlur(e) {
+        for (key in this.timers)
+            //if (timers[key] !== null)
+            //clearInterval(timers[key]);
+            this.timers = {};
     }
 
     getEyeLookDist() {
