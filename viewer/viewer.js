@@ -1004,10 +1004,6 @@ export class Viewer {
         this.dirty = 2;
     }
 
-    toggleFlyMode(bool) {
-        this.cameraControl.toggleFlyMode(bool);
-    }
-
     addSelectionListener(listener) {
         this.eventHandler.on("selection_state_changed", listener.handler);
     }
