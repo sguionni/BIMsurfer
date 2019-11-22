@@ -247,9 +247,4 @@ export class BimSurfer extends EventHandler {
 	cleanup() {
 		this._bimServerViewer.cleanup();
 	}
-
-	toggleFlyMode(bool) {
-		let v = this._bimServerViewer.viewer;
-		v.toggleFlyMode(bool);
-	}
 }

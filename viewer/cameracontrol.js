@@ -251,10 +251,6 @@ export class CameraControl {
                         this.viewer.removeSectionPlaneWidget();
                     }
                     break;
-                case "Escape":
-                    console.log("Touche Escape pressée");
-                    this.dragMode = DRAG_ORBIT;
-                    break;
                 default:
                     break;
             }
@@ -549,17 +545,6 @@ export class CameraControl {
         return vec3.length(vec3.subtract(vec, this.viewer.camera.target, this.viewer.camera.eye));
     }
 
-    //Activation/désactivation du mode de caméra subjective
-    toggleFlyMode(bool) {
-        if (bool) {
-            this.dragMode = FLY_MODE;
-            this.firstFlyMouse = true;
-            //this.canvas.requestPointerLock();
-        } else {
-            this.dragMode = DRAG_ORBIT;
-        }
-    }
-
     //Mode de rotation de la caméra suivant le PointerLock
     //Le curseur disparait et la caméra bouge en fonction des déplacements de la souris non limités au canvas
     //Désactivé until further notice car la visibilité du curseur est requise pour la sélection
@@ -620,9 +605,14 @@ export class CameraControl {
         var fullscreenElement = document.fullscreenElement || document.mozFullScreenElement || document.msFullscreenElement || document.webkitFullscreenElement;
         if (fullscreenElement) {
             console.log("Welcome to FullScreen");
+            this.dragMode = FLY_MODE;
+            this.firstFlyMouse = true;
+            //Fonctionnalité du pointer lock désactivée
+            //this.canvas.requestPointerLock();
         } else if (!fullscreenElement) {
             console.log("Exiting FullScreen Mode");
             this.dragMode = DRAG_ORBIT;
+            //Clean up des interval éventuellement en cours lors du mode fullscreen
             this.clearMouseBorderInterval("Yaw");
             this.clearMouseBorderInterval("Pitch");
         }
