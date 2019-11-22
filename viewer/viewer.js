@@ -969,6 +969,13 @@ export class Viewer {
 
     viewFit(ids) {
         return new Promise((resolve, reject) => {
+            if (ids.length == 0) {
+                this.camera.viewFit(this.modelBounds);
+                this.dirty = 2;
+                resolve();
+                return;
+            }
+
             let aabb = ids.map(this.viewObjects.get.bind(this.viewObjects))
                 .filter((o) => o != null && o.globalizedAabb != null)
                 .map((o) => o.globalizedAabb)
