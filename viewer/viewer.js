@@ -970,7 +970,7 @@ export class Viewer {
     viewFit(ids) {
         return new Promise((resolve, reject) => {
             if (ids.length == 0) {
-                this.camera.viewFit(this.modelBounds);
+                this.camera.viewFit(false, false, true);
                 this.dirty = 2;
                 resolve();
                 return;
