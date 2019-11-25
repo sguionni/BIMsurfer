@@ -243,6 +243,9 @@ export class BimSurfer extends EventHandler {
 	addSelectedHandler(handler) {
 		this._bimServerViewer.addSelectionListener(handler);
 	}
+	addFullScreenHandler(handler) {
+		this._bimServerViewer.addFullScreenListener(handler);
+	}
 
 	cleanup() {
 		this._bimServerViewer.cleanup();

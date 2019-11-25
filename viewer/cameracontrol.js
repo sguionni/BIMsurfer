@@ -34,8 +34,7 @@ export class CameraControl {
         this.lastY = 0;
         this.yaw = 0;
         this.pitch = 0;
-        this.cameraSpeed = 1.3;
-
+        this.cameraSpeed = 1.1;
         this.flyModeKeys = {
             ArrowLeft: (pan) => {
                 this.camera.pan([pan, 0.0, 0.0]);
@@ -74,6 +73,7 @@ export class CameraControl {
         this.smoothstepIt = 0;
         this.smoothstepSteps = 5;
 
+        this.formmerDragMode = DRAG_ORBIT;;
         this.dragMode = DRAG_ORBIT;
 
         this.canvas.oncontextmenu = (e) => {
@@ -288,7 +288,10 @@ export class CameraControl {
 
         switch (e.which) {
             case 1:
-                if (this.dragMode == FLY_MODE) return;
+                if (this.dragMode == FLY_MODE) {
+                    this.viewer.eventHandler.fire("full_screen_state_changed", true, true);
+                    return;
+                }
                 else {
                     if (e.ctrlKey) {
                         this.mouseDownTime = 0;
@@ -313,6 +316,7 @@ export class CameraControl {
                 }
                 break;
             case 2:
+                this.formmerDragMode = this.dragMode;
                 this.dragMode = DRAG_PAN;
                 break;
             default:
@@ -338,6 +342,9 @@ export class CameraControl {
 
         switch (e.which) {
             case 1:
+                if (this.dragMode == FLY_MODE) {
+                    this.viewer.eventHandler.fire("full_screen_state_changed", true, false);
+                }
                 if (dt < 500. && this.closeEnoughCanvas(this.mouseDownPos, this.mousePos)) {
                     var viewObject = this.viewer.pick({
                         canvasPos: this.mousePos,
@@ -527,8 +534,8 @@ export class CameraControl {
         // Potential end-of-pan
         if (this.dragMode == DRAG_PAN) {
             this.camera.updateLowVolumeListeners();
+            this.dragMode = this.formmerDragMode;
         }
-        this.dragMode = (this.dragMode == FLY_MODE) ? FLY_MODE : DRAG_ORBIT;
     }
 
     //Désactivation de la rotation automatique du au curseur traversant les edges jusqu'au reste de l'interface
@@ -607,16 +614,21 @@ export class CameraControl {
             console.log("Welcome to FullScreen");
             this.dragMode = FLY_MODE;
             this.firstFlyMouse = true;
+            this.viewer.eventHandler.fire("full_screen_state_changed", true, false);
             //Fonctionnalité du pointer lock désactivée
             //this.canvas.requestPointerLock();
         } else if (!fullscreenElement) {
             console.log("Exiting FullScreen Mode");
             this.dragMode = DRAG_ORBIT;
+            this.viewer.eventHandler.fire("full_screen_state_changed", false, false);
             //Clean up des interval éventuellement en cours lors du mode fullscreen
             this.clearMouseBorderInterval("Yaw");
             this.clearMouseBorderInterval("Pitch");
+
         }
     }
+
+
     /**
      * @private
      */
@@ -636,11 +648,12 @@ export class CameraControl {
             document.removeEventListener('mozpointerlockchange', this.pointerLockChange);
             document.removeEventListener('webkitpointerlockchange', this.pointerLockChange);
         }
+
         if (this.isFullscreenSupported == true) {
-            document.addEventListener("fullscreenchange", this.fullScreenChangeEvent);
-            document.addEventListener('mozfullscreenchange', this.fullScreenChangeEvent);
-            document.addEventListener('MSFullscreenChange', this.fullScreenChangeEvent);
-            document.addEventListener('webkitfullscreenchange', this.fullScreenChangeEvent);
+            document.removeEventListener("fullscreenchange", this.fullScreenChangeEvent);
+            document.removeEventListener('mozfullscreenchange', this.fullScreenChangeEvent);
+            document.removeEventListener('MSFullscreenChange', this.fullScreenChangeEvent);
+            document.removeEventListener('webkitfullscreenchange', this.fullScreenChangeEvent);
         }
     }
 

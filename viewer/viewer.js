@@ -1014,4 +1014,7 @@ export class Viewer {
     addSelectionListener(listener) {
         this.eventHandler.on("selection_state_changed", listener.handler);
     }
+    addFullScreenListener(listener) {
+        this.eventHandler.on("full_screen_state_changed", listener.handler);
+    }
 }
