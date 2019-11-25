@@ -2,8 +2,8 @@ import * as mat4 from "./glmatrix/mat4.js";
 import * as mat3 from "./glmatrix/mat3.js";
 import * as vec3 from "./glmatrix/vec3.js";
 
-import {Perspective} from "./perspective.js";
-import {Orthographic} from "./orthographic.js";
+import { Perspective } from "./perspective.js";
+import { Orthographic } from "./orthographic.js";
 
 var tempMat4 = mat4.create();
 var tempMat4b = mat4.create();
@@ -65,6 +65,11 @@ export class Camera {
         this._orbitting = false;
 
         this.autonear = true;
+
+        this.smoothstepIt = 0;
+        this.smoothstepSteps = 250;
+        this.timersCamera = {};
+        this.repeat = 10;
     }
 
     lock() {
@@ -86,17 +91,17 @@ export class Camera {
 
         this.perspective.setModelBounds(bounds);
         this.orthographic.setModelBounds(bounds);
-        
+
         // Store aabb calculated} from points
         let a = vec3.fromValues(+Infinity, +Infinity, +Infinity);
         let b = vec3.fromValues(-Infinity, -Infinity, -Infinity);
 
-        let zero_one = [0,1];
+        let zero_one = [0, 1];
 
         for (let i of zero_one) {
             for (let j of zero_one) {
                 for (let k of zero_one) {
-                    let v = vec3.fromValues(bounds[3*i+0], bounds[3*j+1], bounds[3*k+2]);
+                    let v = vec3.fromValues(bounds[3 * i + 0], bounds[3 * j + 1], bounds[3 * k + 2]);
                     this._modelBounds.push(v);
 
                     for (let l = 0; l < 3; ++l) {
@@ -108,7 +113,7 @@ export class Camera {
                         }
                     }
                 }
-            }   
+            }
         }
 
         vec3.add(a, a, b);
@@ -121,7 +126,7 @@ export class Camera {
 
     _build() {
         if (this._dirty && !this._locked && this._modelBounds) {
-            vec3.set(this._up, 0,0,1);
+            vec3.set(this._up, 0, 0, 1);
             var d = vec3.subtract(vec3.create(), this._target, this._eye);
             vec3.normalize(d, d);
             vec3.cross(this._up, d, this._up);
@@ -133,10 +138,10 @@ export class Camera {
             mat3.fromMat4(tempMat4b, this._viewMatrix);
             mat3.invert(tempMat4b, tempMat4b);
             mat3.transpose(this._viewNormalMatrix, tempMat4b);
-            
+
             let [near, far] = [+Infinity, -Infinity];
 
-            if (this.autonear) {                
+            if (this.autonear) {
                 this._modelBounds.forEach((v) => {
                     vec3.transformMat4(tmp_modelBounds, v, this._viewMatrix);
                     let z = -tmp_modelBounds[2];
@@ -158,7 +163,7 @@ export class Camera {
             this.perspective.near = near;
             this.perspective.far = far;
             this.orthographic.near = near;
-            this.orthographic.far = far;        
+            this.orthographic.far = far;
 
             mat4.invert(this._viewMatrixInverted, this._viewMatrix);
             mat4.multiply(this._viewProjMatrix, this.projMatrix, this._viewMatrix);
@@ -258,7 +263,7 @@ export class Camera {
      @return {String} projectionType "persp" or "ortho".
      */
     get projectionType() {
-        return this._projection.constructor.name.substr(0,5).toLowerCase();
+        return this._projection.constructor.name.substr(0, 5).toLowerCase();
     }
 
     /**
@@ -277,9 +282,9 @@ export class Camera {
     set eye(eye) {
         this._eye.set(eye || [0.0, 0.0, -10.0]);
         this._setDirty();
-    	for (var listener of this.lowVolumeListeners) {
-    		listener();
-    	}
+        for (var listener of this.lowVolumeListeners) {
+            listener();
+        }
     }
 
     /**
@@ -297,9 +302,9 @@ export class Camera {
     set target(target) {
         this._target.set(target || [0.0, 0.0, 0.0]);
         this._setDirty();
-    	for (var listener of this.lowVolumeListeners) {
-    		listener();
-    	}
+        for (var listener of this.lowVolumeListeners) {
+            listener();
+        }
     }
 
     /**
@@ -444,18 +449,18 @@ export class Camera {
     }
 
     set orbitting(orbitting) {
-    	if (this._orbitting != orbitting) {
-        	for (var listener of this.lowVolumeListeners) {
-        		listener();
-        	}
-    	}
-    	this._orbitting = orbitting;
+        if (this._orbitting != orbitting) {
+            for (var listener of this.lowVolumeListeners) {
+                listener();
+            }
+        }
+        this._orbitting = orbitting;
     }
 
     get orbitting() {
-    	return this._orbitting;
+        return this._orbitting;
     }
-    
+
     /**
      Rotates the eye position about the target position, pivoting around the up vector.
 
@@ -463,12 +468,12 @@ export class Camera {
      */
     orbitYaw(degrees) {
         // @todo, these functions are not efficient nor numerically stable, but simple to understand.
-        
-    	mat4.identity(YAW_MATRIX);
-    	mat4.translate(YAW_MATRIX, YAW_MATRIX, this._center);
-    	mat4.rotate(YAW_MATRIX, YAW_MATRIX, degrees * 0.0174532925 * 2, this._worldUp);
-    	mat4.translate(YAW_MATRIX, YAW_MATRIX, this._negatedCenter);
-    	
+
+        mat4.identity(YAW_MATRIX);
+        mat4.translate(YAW_MATRIX, YAW_MATRIX, this._center);
+        mat4.rotate(YAW_MATRIX, YAW_MATRIX, degrees * 0.0174532925 * 2, this._worldUp);
+        mat4.translate(YAW_MATRIX, YAW_MATRIX, this._negatedCenter);
+
         vec3.transformMat4(this._eye, this._eye, YAW_MATRIX);
         vec3.transformMat4(this._target, this._target, YAW_MATRIX);
 
@@ -594,9 +599,9 @@ export class Camera {
     zoom(delta, canvasPos) { // Translate 'eye' by given increment on (eye->target) vector
         // @todo: also not efficient
 
-    	this.orthographic.zoom(delta);
-    	
-        let [x,y] = canvasPos;
+        this.orthographic.zoom(delta);
+
+        let [x, y] = canvasPos;
         vec3.set(tempVec3, x / this.viewer.width * 2 - 1, - y / this.viewer.height * 2 + 1, 1.);
         vec3.transformMat4(tempVec3, tempVec3, this.projection.projMatrixInverted);
         vec3.transformMat4(tempVec3, tempVec3, this.viewMatrixInverted);
@@ -611,10 +616,10 @@ export class Camera {
 
         this.updateLowVolumeListeners();
     }
-    
+
     updateLowVolumeListeners() {
         for (var listener of this.lowVolumeListeners) {
-        	listener();
+            listener();
         }
     }
 
@@ -624,7 +629,10 @@ export class Camera {
      @param {Float32Array} aabb The axis-aligned World-space bounding box (AABB).
      @param {Number} fitFOV Field-of-view occupied by the AABB when the camera has fitted it to view.
      */
-    viewFit(aabb, fitFOV) {
+    viewFit(aabb, fitFOV, interpolated) {
+        if (!!interpolated && ("ViewFit" in this.timersCamera))
+            return;
+
         aabb = aabb || this.viewer.modelBounds;
         fitFOV = fitFOV || this.perspective.fov;
         var eyeToTarget = vec3.normalize(tempVec3b, vec3.subtract(tempVec3, this._eye, this._target));
@@ -637,12 +645,48 @@ export class Camera {
             (aabb[4] + aabb[1]) / 2,
             (aabb[5] + aabb[2]) / 2
         ];
-        this._target.set(center);
-        var sca = Math.abs(diagonal / Math.tan(fitFOV * 0.0174532925));
-        this._eye[0] = this._target[0] + (eyeToTarget[0] * sca);
-        this._eye[1] = this._target[1] + (eyeToTarget[1] * sca);
-        this._eye[2] = this._target[2] + (eyeToTarget[2] * sca);
+        //Final positionof the eye in tempVec3
+        tempVec3.set(center);
 
+        var sca = Math.abs(diagonal / Math.tan(fitFOV * 0.0174532925));
+
+        //Final position of the target in tempVec3e
+        tempVec3e = vec3.fromValues(tempVec3[0] + (eyeToTarget[0] * sca),
+            tempVec3[1] + (eyeToTarget[1] * sca),
+            tempVec3[2] + (eyeToTarget[2] * sca)
+        );
+
+        if (!!interpolated && !("ViewFit" in this.timersCamera)) {
+
+            //Original position of the eye in tempVec3b
+            vec3.copy(tempVec3b, this._eye);
+            //Original position of the target in temvec3d
+            vec3.copy(tempVec3d, this._target);
+
+            //Valeures finales de eye et target dans tempVec3e et tempVec3
+            //Interpolation entre valeurs de début et valeurs finales 
+            //Suivant la fonction smootherstep2
+
+            var vm = this;
+            this.timersCamera["ViewFit"] = window.setInterval(() => {
+                if (vm.smoothstepIt <= vm.smoothstepSteps) {
+                    let v = this.smootherstep2(vm.smoothstepIt / vm.smoothstepSteps);
+                    vec3.lerp(vm._eye, tempVec3b, tempVec3e, v);
+                    vec3.lerp(vm._target, tempVec3d, tempVec3, v);
+                    vm.smoothstepIt++;
+                    this._setDirty();
+                } else if (vm.smoothstepIt > vm.smoothstepSteps) {
+                    vm.smoothstepIt = 0;
+                    clearInterval(vm.timersCamera["ViewFit"]);
+                    delete vm.timersCamera["ViewFit"];
+                }
+            }, vm.repeat);
+
+        } else {
+            vec3.copy(this._eye, tempVec3e);
+            vec3.copy(this._target, tempVec3);
+
+        }
         this._setDirty();
     }
 
@@ -660,4 +704,16 @@ export class Camera {
             }
         });
     }
+
+    /**
+    * Functions used for interpolations between two values
+    */
+
+    smootherstepC(x) {
+        return ((x) * (x) * (3 - 2 * (x)));
+    }
+    smootherstep2(x) {
+        return ((x) * (x) * (x) * ((x) * ((x) * 6 - 15) + 10));
+    }
+
 }
