@@ -477,7 +477,7 @@ export class CameraControl {
                 //Rotation plus jumpy sans
                 if (this.mouseWasAtEdges == true) {
                     if (this.smoothstepIt < this.smoothstepSteps) {
-                        this.interpolationFactor = 1 * (this.smoothstepC(this.smoothstepIt / this.smoothstepSteps))
+                        this.interpolationFactor = 1 * (this.smoothstepC(this.smoothstepIt / this.smoothstepSteps));
                         console.log("MouseFlyModeSensitivity interpolated by factor ", this.interpolationFactor);
                         this.smoothstepIt++;
                     } else if (this.smoothstepIt >= this.smoothstepSteps) {
@@ -542,9 +542,9 @@ export class CameraControl {
     //Cas invalidé par la fonctionnalité grand écran
     canvasBlur(e) {
         for (key in this.timers)
-            //if (timers[key] !== null)
-            //clearInterval(timers[key]);
-            this.timers = {};
+            if (timers[key] !== null)
+                clearInterval(timers[key]);
+        this.timers = {};
     }
 
     getEyeLookDist() {
