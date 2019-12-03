@@ -34,24 +34,44 @@ export class CameraControl {
         this.lastY = 0;
         this.yaw = 0;
         this.pitch = 0;
-        this.cameraSpeed = 1.1;
-        this.flyModeKeys = {
-            ArrowLeft: (pan) => {
-                this.camera.pan([pan, 0.0, 0.0]);
-            },
-            ArrowRight: (pan) => {
-                this.camera.pan([- pan, 0.0, 0.0]);
-            },
-            ArrowUp: (pan) => {
-                this.camera.pan([0.0, 0.0, - pan]);
-            },
-            ArrowDown: (pan) => {
-                this.camera.pan([0.0, 0.0, pan]);
-            }
-        };
-        this.timers = {};
-        this.repeat = 10;
+        this.cameraSpeed = 300;
 
+        this.timestep = 1000 / 61;
+        this.panValue = (this.getEyeLookDist() / 600) * this.cameraSpeed * this.timestep;
+
+        this.flyModeKeys = {
+            ArrowLeft: [false, 0, () => {
+                this.camera.pan([this.panValue, 0.0, 0.0]);
+            }],
+            ArrowRight: [false, 0, () => {
+                this.camera.pan([- this.panValue, 0.0, 0.0]);
+            }],
+            ArrowUp: [false, 0, () => {
+                this.camera.pan([0.0, 0.0, - this.panValue]);
+            }],
+            ArrowDown: [false, 0, () => {
+                this.camera.pan([0.0, 0.0, this.panValue]);
+            }]
+        };
+        /*
+        
+                this.flyModeKeys = {
+                    ArrowLeft: () => {
+                        this.camera.pan([this.panValue, 0.0, 0.0]);
+                    },
+                    ArrowRight: () => {
+                        this.camera.pan([- this.panValue, 0.0, 0.0]);
+                    },
+                    ArrowUp: () => {
+                        this.camera.pan([0.0, 0.0, - this.panValue]);
+                    },
+                    ArrowDown: () => {
+                        this.camera.pan([0.0, 0.0, this.panValue]);
+                    }
+                };
+        this.timers = {};
+        this.repeat = 1000 / 2;
+        */
 
         this.mouseDown = false;
         this.firstFlyMouse = true;
@@ -142,16 +162,12 @@ export class CameraControl {
             this.canvasWheel(e);
         });
 
-        this.canvas.addEventListener("blur", this.canvasBlurHandler = (e) => {
-            this.canvasBlur(e);
-        });
-
         this.pointerLockSupported = 'pointerLockElement' in document ||
             'mozPointerLockElement' in document ||
             'webkitPointerLockElement' in document;
         this.pointerLockEnabled = false;
 
-        /*
+
         //PointerLock Mode disabled unter further notice
         if (this.pointerLockSupported == true) {
             this.canvas.requestPointerLock = this.canvas.requestPointerLock ||
@@ -171,7 +187,7 @@ export class CameraControl {
             document.addEventListener('webkitpointerlockchange', this.pointerLockChangeHandler = (e) => {
                 this.pointerLockChange()
             }, false);
-        }*/
+        }
 
     }
 
@@ -200,27 +216,6 @@ export class CameraControl {
             canvasPos[1] = event.pageY - totalOffsetTop;
         }
         return canvasPos;
-    }
-
-    getCanvasRelativePosFromEvent(event, percentage) {
-
-        if (!event) {
-            console.log("TODO");
-        } else {
-            var rect = event.target.getBoundingClientRect();
-            //Get the coordinates of the center of the canvas
-            var centerx = (rect.left + rect.right) / 2;
-            var centery = (rect.bottom + rect.top) / 2;
-            //Get the mouse position in the canvas space, 0,0 being at the center of the canvas
-            var distancex = event.pageX - centerx;
-            var distancey = event.pageY - centery;
-            //Compute the percentage of offset from to center to border
-            //0 is at center, 100% is at the edge
-            percentage[0] = distancex / (rect.right - centerx);
-            percentage[1] = distancey / (rect.bottom - centery);
-            //console.log(" Mouse is at ", percentage[0], "% in x and ", percentage[1], "% in y");
-        }
-        return percentage;
     }
 
     /**
@@ -254,19 +249,32 @@ export class CameraControl {
                 default:
                     break;
             }
+            if ((e.key in this.flyModeKeys) && !(this.flyModeKeys[e.key][0])) {
+                this.flyModeKeys[e.key][0] = true; //Peut devenir juste arrowleft = true
+            }
+            /*
             if ((e.key in this.flyModeKeys) && !(e.key in this.timers)) {
                 this.timers[e.key] = null;
                 this.flyModeKeys[e.key](this.getEyeLookDist() / 600 * this.cameraSpeed);
                 if (this.repeat !== 0) {
-                    this.timers[e.key] = window.setInterval(this.flyModeKeys[e.key], this.repeat, (this.getEyeLookDist() / 600) * this.cameraSpeed);
+                    this.timers[e.key] = window.setInterval(this.flyModeKeys[e.key], this.timestep, (this.getEyeLookDist() / 600) * this.cameraSpeed);
                 }
-            }
+            }*/
         } else if (state == "up") {
+            if ((e.key in this.flyModeKeys) && (!!this.flyModeKeys[e.key][0])) {
+                this.flyModeKeys[e.key][0] = false;
+                this.flyModeKeys[e.key][1] = 0;
+            }
+            /*
             if (e.key in this.timers) {
                 if (this.timers[e.key] !== null)
                     clearInterval(this.timers[e.key]);
+                this.flyModeKeys[e.key][0] = false;
+                this.flyModeKeys[e.key][1] = 0;
                 delete this.timers[e.key];
+                //Mettre le arroww a false
             }
+            */
         }
 
         e.preventDefault();
@@ -290,6 +298,7 @@ export class CameraControl {
             case 1:
                 if (this.dragMode == FLY_MODE) {
                     this.viewer.eventHandler.fire("full_screen_state_changed", true, true);
+
                     return;
                 }
                 else {
@@ -346,6 +355,10 @@ export class CameraControl {
                     this.viewer.eventHandler.fire("full_screen_state_changed", true, false);
                 }
                 if (dt < 500. && this.closeEnoughCanvas(this.mouseDownPos, this.mousePos)) {
+                    if (this.dragMode == FLY_MODE) {
+                        var rect = event.target.getBoundingClientRect();
+                        this.mousePos = vec2.fromValues((rect.left + rect.right) / 2, (rect.bottom + rect.top) / 2)
+                    }
                     var viewObject = this.viewer.pick({
                         canvasPos: this.mousePos,
                         shiftKey: e.shiftKey
@@ -421,105 +434,17 @@ export class CameraControl {
                 } else if (this.dragMode == DRAG_PAN) {
                     var f = this.getEyeLookDist() / 600;
                     this.camera.pan([xDelta * f, yDelta * this.mousePanSensitivity * f, 0.0]);
-                } else if (this.dragMode == FLY_MODE) {
-                    if (xDelta !== 0) {
-                        this.yaw = xDelta * this.mouseMouseFlyModeSensitivity * 2 * (Math.PI / 180);
-                        this.camera.yaw(this.yaw);
-                    }
-                    if (yDelta !== 0) {
-                        this.pitch = yDelta * this.mouseMouseFlyModeSensitivity * 2 * (Math.PI / 180);
-                        if (this.pitch > 89.0)
-                            this.pitch = 89.0;
-                        if (this.pitch < -89.0)
-                            this.pitch = -89.0;
-
-                        this.camera.pitch(this.pitch);
-                    }
                 }
             }
         }
 
         if (this.dragMode == FLY_MODE) {
-            /*if (this.pointerLockEnabled == true) {
+            if (this.pointerLockEnabled == true) {
 
                 this.yaw = -e.movementX * this.mouseMouseFlyModeSensitivity * (Math.PI / 180);
                 this.camera.yaw(this.yaw);
                 this.pitch = -e.movementY * this.mouseMouseFlyModeSensitivity * (Math.PI / 180);
                 this.camera.pitch(this.pitch);
-                console.log("Pointerlock Mouse Move")
-
-            } */
-            console.log("Regular Mouse Move")
-
-            this.getCanvasPosFromEvent(e, this.mousePos);
-
-            //Récupération en pourcentage de la position du curseur du centre vers les bors du Canvas
-            this.getCanvasRelativePosFromEvent(e, this.mousePercentage);
-
-            //Activation/Désactivaiton de la rotation horizontale de la caméra lorsque le curseur est au bords gauche ou droite
-            Math.abs(this.mousePercentage[0]) < this.canvasMouseBorderTolerance ?
-                this.clearMouseBorderInterval("Yaw") : this.mouseBorderChange(this.mousePercentage[0], "Yaw");
-
-            //Activation/Désactivaiton de la rotation horizontale de la caméra lorsque le curseur  est au bords haut ou bas
-            Math.abs(this.mousePercentage[1]) < this.canvasMouseBorderTolerance ?
-                this.clearMouseBorderInterval("Pitch") : this.mouseBorderChange(this.mousePercentage[1], "Pitch");
-
-            //Rotation standard de la caméra lorsque le curseur se trouve dans le canvas et hors des bords
-            if ((Math.abs(this.mousePercentage[0]) < this.canvasMouseBorderTolerance) &&
-                (Math.abs(this.mousePercentage[1]) < this.canvasMouseBorderTolerance)) {
-                //if ((this.lastMouseMoveEventSample - this.viewer.timeStamp) < this.viewer.deltaTime)
-                //return;
-
-                //this.lastMouseMoveEventSample = this.viewer.timeStamp;
-
-
-                //Interpolation produisant une vitesse --> effet d'ease in lorsqu'on quitte un bord et revient dans le canvas
-                //Rotation plus jumpy sans
-                if (this.mouseWasAtEdges == true) {
-                    if (this.smoothstepIt < this.smoothstepSteps) {
-                        this.interpolationFactor = 1 * (this.smoothstepC(this.smoothstepIt / this.smoothstepSteps));
-                        console.log("MouseFlyModeSensitivity interpolated by factor ", this.interpolationFactor);
-                        this.smoothstepIt++;
-                    } else if (this.smoothstepIt >= this.smoothstepSteps) {
-                        this.smoothstepIt = 0;
-                        this.mouseWasAtEdges = false;
-                    }
-
-                }
-
-                //Désactive le calcul de la rotation de la caméra lorsque le fly mode est activé et que le curseur revient sur le canvas
-                //Cas non encontré avec la fonction du grand écran donc non pris en compte
-                if (this.firstFlyMouse) // this bool variable is initially set to true
-                {
-                    this.lastX = this.mousePos[0];
-                    this.lastY = this.mousePos[1];
-                    this.firstFlyMouse = false;
-                }
-
-
-                //Calcul des deltas de déplacement du curseur
-                var x = this.mousePos[0];
-                var y = this.mousePos[1];
-                var xDelta = (x - this.lastX);
-                var yDelta = (y - this.lastY);
-                this.lastX = x;
-                this.lastY = y;
-                let f = 0.035;
-
-                //Conversions en angles des deltas et applications à la rotation de la caméra
-                if (xDelta !== 0) {
-                    this.yaw = -xDelta * this.mouseMouseFlyModeSensitivity * (Math.PI / 180);
-                    this.camera.yaw(this.yaw * ((!!this.mouseWasAtEdges) ? this.interpolationFactor : 1));
-                }
-                if (yDelta !== 0) {
-                    this.pitch = -yDelta * this.mouseMouseFlyModeSensitivity * (Math.PI / 180);
-                    if (this.pitch > 89.0)
-                        this.pitch = 89.0;
-                    if (this.pitch < -89.0)
-                        this.pitch = -89.0;
-
-                    this.camera.pitch(this.pitch * ((!!this.mouseWasAtEdges) ? this.interpolationFactor : 1));
-                }
             }
         }
 
@@ -555,7 +480,7 @@ export class CameraControl {
     //Mode de rotation de la caméra suivant le PointerLock
     //Le curseur disparait et la caméra bouge en fonction des déplacements de la souris non limités au canvas
     //Désactivé until further notice car la visibilité du curseur est requise pour la sélection
-    /*
+
     pointerLockChange() {
         var pointerLockElement = document.pointerLockElement ||
             document.mozPointerLockElement ||
@@ -565,45 +490,13 @@ export class CameraControl {
         if (!!pointerLockElement) {
             // pointeur verrouillé
             if (pointerLockElement === this.canvas) {
-                console.log('The pointer lock status is now locked on the Canvas');
                 this.pointerLockEnabled = true;
             }
-
-
         } else {
             // pointeur non verrouillé
-            console.log('The pointer lock status is now unlocked');
             //DRAG_MODE back to regular
             this.dragMode = DRAG_ORBIT;
             this.pointerLockEnabled = false;
-            //document.removeEventListener("mousemove", updatePosition, false);
-        }
-    }*/
-
-    //Activation de la rotation de la caméra et mise en place d'une rotation répétée
-    mouseBorderChange(percentage, rotation) {
-        if (Math.abs(percentage) > this.canvasMouseBorderTolerance) {
-            this.mouseWasAtEdges = true;
-            if ((rotation in this.rotateFromMouseAtBorder) && !(rotation in this.timersMouse)) {
-                this.timersMouse[rotation] = null;
-                this.rotateFromMouseAtBorder[rotation](
-                    this.mouseFlyModeBorderSensitivity * percentage
-                );
-                if (this.repeatMouse !== 0) {
-                    this.timersMouse[rotation] = window.setInterval(
-                        this.rotateFromMouseAtBorder[rotation],
-                        this.repeatMouse, (this.mouseFlyModeBorderSensitivity * percentage));
-                }
-            }
-        }
-    }
-
-    //Désactivation de la répétion de la rotation
-    clearMouseBorderInterval(rotation) {
-        if (rotation in this.timersMouse) {
-            if (this.timersMouse[rotation] !== null)
-                clearInterval(this.timersMouse[rotation]);
-            delete this.timersMouse[rotation];
         }
     }
 
@@ -611,21 +504,44 @@ export class CameraControl {
     fullScreenChangeEvent(e) {
         var fullscreenElement = document.fullscreenElement || document.mozFullScreenElement || document.msFullscreenElement || document.webkitFullscreenElement;
         if (fullscreenElement) {
-            console.log("Welcome to FullScreen");
             this.dragMode = FLY_MODE;
-            this.firstFlyMouse = true;
             this.viewer.eventHandler.fire("full_screen_state_changed", true, false);
             //Fonctionnalité du pointer lock désactivée
-            //this.canvas.requestPointerLock();
+            this.canvas.requestPointerLock();
         } else if (!fullscreenElement) {
-            console.log("Exiting FullScreen Mode");
             this.dragMode = DRAG_ORBIT;
             this.viewer.eventHandler.fire("full_screen_state_changed", false, false);
-            //Clean up des interval éventuellement en cours lors du mode fullscreen
-            this.clearMouseBorderInterval("Yaw");
-            this.clearMouseBorderInterval("Pitch");
-
         }
+    }
+
+    updateCameraMovement() {
+        var update = false;
+        for (var key in this.flyModeKeys)
+            update |= this.flyModeKeys[key][0];
+        return update;
+    }
+    moveCamera(deltaTime) {
+        if (!this.updateCameraMovement()) return;
+
+        for (var key in this.flyModeKeys) {
+            if (!!this.flyModeKeys[key][0]) {
+
+                var delta = this.flyModeKeys[key][1];
+                var numUpdateSteps = 0;
+                delta += (deltaTime);
+
+                while (delta >= this.timestep) {
+                    this.flyModeKeys[key][2]();
+                    delta -= this.timestep;
+                    if (++numUpdateSteps >= 240) {
+                        delta = 0;
+                        break;
+                    }
+                }
+
+            }
+        }
+
     }
 
 
@@ -655,13 +571,5 @@ export class CameraControl {
             document.removeEventListener('MSFullscreenChange', this.fullScreenChangeEvent);
             document.removeEventListener('webkitfullscreenchange', this.fullScreenChangeEvent);
         }
-    }
-
-    //Fonctions d'interpolation
-    smoothstepS(x) {
-        return ((x) * (x));
-    }
-    smoothstepC(x) {
-        return ((x) * (x) * (x));
     }
 }

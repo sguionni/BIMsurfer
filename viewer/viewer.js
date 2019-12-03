@@ -488,19 +488,32 @@ export class Viewer {
     render(now) {
         const seconds = now * 0.001;
         const deltaTime = this.deltaTime = seconds - this.then;
+
+
         this.then = seconds;
 
         this.fps++;
+        //var t0 = performance.now();
+        this.cameraControl.moveCamera(deltaTime * 1000);
+        //var t1 = performance.now();
+        //var preupdatePerf = t1 - t0;
+        // var drawSceneperf = 0;
 
         var wasDirty = this.dirty;
         if (this.dirty == 2 || (this.dirty == 1 && now - this.lastRepaint > 500)) {
             let reason = this.dirty;
             this.dirty = 0;
+            //t0 = performance.now();
             this.drawScene(this.buffers, deltaTime, reason);
+            //t1 = performance.now();
+            //var drawSceneperf = t1 - t0;
+
             this.lastRepaint = now;
         }
 
         if (seconds - this.timeLast >= 1) {
+            //this.stats.setParameter("Rendering", "PreUpdate", preupdatePerf);
+            //this.stats.setParameter("Rendering", "DrawScene", drawSceneperf)
             if (wasDirty != 0) {
                 this.stats.setParameter("Rendering", "FPS", Number(this.fps / (seconds - this.timeLast)).toPrecision(5));
             } else {

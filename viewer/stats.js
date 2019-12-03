@@ -7,7 +7,7 @@ export class Stats {
 		this.parameters = {};
 		this.dirty = true;
 		this.updateRequested = true;
-		
+
 		this.groups = {
 			"Tiling": [
 				"Rendering",
@@ -22,6 +22,9 @@ export class Stats {
 				"Total"
 			], "Rendering": [
 				"FPS"
+				//,
+				//"PreUpdate",
+				//"DrawScene"
 			], "Stats": [
 				"Updates"
 			], "Models": [
@@ -64,7 +67,7 @@ export class Stats {
 				"Quantize vertices",
 			]
 		};
-		
+
 		for (var groupName in this.groups) {
 			var group = this.groups[groupName];
 			var groupObject = {};
@@ -121,7 +124,7 @@ export class Stats {
 	requestUpdate() {
 		this.updateRequested = true;
 	}
-	
+
 	update() {
 		if (this.active && document.getElementById("stats")) {
 			if (!this.updateRequested) {
@@ -136,7 +139,7 @@ export class Stats {
 					groupElement = document.createElement("div");
 					groupElement.id = groupName + "-group";
 					document.getElementById("stats").appendChild(groupElement);
-					
+
 					var groupTitle = document.createElement("h3");
 					groupTitle.innerHTML = groupName;
 					groupElement.appendChild(groupTitle);
@@ -161,7 +164,7 @@ export class Stats {
 						}
 					}
 					if (newStringValue != element.textContent) {
-						element.textContent  = newStringValue;
+						element.textContent = newStringValue;
 					}
 				}
 			}
@@ -169,7 +172,7 @@ export class Stats {
 			this.dirty = false;
 		}
 	}
-	
+
 	cleanup() {
 		var stats = document.getElementById("stats");
 		if (stats != null) {

@@ -663,7 +663,7 @@ export class Camera {
             //Original position of the target in temvec3d
             vec3.copy(tempVec3d, this._target);
 
-            //Valeures finales de eye et target dans tempVec3e et tempVec3
+            //Valeurs finales de eye et target dans tempVec3e et tempVec3
             //Interpolation entre valeurs de début et valeurs finales 
             //Suivant la fonction smootherstep2
 
