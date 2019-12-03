@@ -921,6 +921,14 @@ export class Viewer {
         };
     }
 
+    unpick() {
+        if (this.selectedElements.size > 0) {
+            this.selectedElements.clear();
+            this.dirty = 2;
+            this.eventHandler.fire("selection_state_changed", [], false);
+        }
+    }
+
     getPickColor(uniqueId) { // Converts an integer to a pick color
         var viewObject = this.viewObjects.get(uniqueId);
         if (viewObject == null) {

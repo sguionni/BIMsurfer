@@ -327,6 +327,13 @@ export class CameraControl {
             case 2:
                 this.formmerDragMode = this.dragMode;
                 this.dragMode = DRAG_PAN;
+
+                break;
+            case 3:
+                if (this.viewer.getSelected().length > 0) {
+                    console.log("Something has to be unselected");
+                    this.viewer.unpick();
+                }
                 break;
             default:
                 break;
