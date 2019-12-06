@@ -315,5 +315,8 @@ export class AbstractViewer {
 	addFullScreenListener(fullscreenListener) {
 		this.viewer.addFullScreenListener(fullscreenListener);
 	}
+	addTogglePlanSectionListener(planSectionListener) {
+		this.viewer.addTogglePlanSectionListener(planSectionListener);
+	}
 
 }
