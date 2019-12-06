@@ -93,6 +93,8 @@ export class CameraControl {
         this.smoothstepIt = 0;
         this.smoothstepSteps = 5;
 
+        this.planSectionActivated = false;
+        this.orbitInPlanSectionMode = false;
         this.formmerDragMode = DRAG_ORBIT;;
         this.dragMode = DRAG_ORBIT;
 
@@ -128,8 +130,6 @@ export class CameraControl {
                 this.fullScreenChangeEvent(e);
             });
         }
-
-
 
         this.canvas.addEventListener("mousedown", this.canvasMouseDownHandler = (e) => {
             this.canvasMouseDown(e);
@@ -236,19 +236,6 @@ export class CameraControl {
     }
     keyEvent(e, state) {
         if (state == "down") {
-            switch (e.key) {
-                case "Control":
-                    if (state === "down") {
-                        if (this.viewer.sectionPlaneIsDisabled) {
-                            this.viewer.positionSectionPlaneWidget({ canvasPos: [this.lastX, this.lastY] });
-                        }
-                    } else {
-                        this.viewer.removeSectionPlaneWidget();
-                    }
-                    break;
-                default:
-                    break;
-            }
             if ((e.key in this.flyModeKeys) && !(this.flyModeKeys[e.key][0])) {
                 this.flyModeKeys[e.key][0] = true; //Peut devenir juste arrowleft = true
             }
@@ -302,12 +289,14 @@ export class CameraControl {
                     return;
                 }
                 else {
-                    if (e.ctrlKey) {
+                    if (this.planSectionActivated) {
                         this.mouseDownTime = 0;
                         if (this.viewer.enableSectionPlane({ canvasPos: [this.lastX, this.lastY] })) {
+                            this.orbitInPlanSectionMode = false;
                             this.dragMode = DRAG_SECTION;
-                        } else if (!this.viewer.sectionPlaneIsDisabled) {
+                        } else {
                             this.viewer.disableSectionPlane();
+                            this.orbitInPlanSectionMode = true;
                             this.dragMode = DRAG_ORBIT;
                         }
                         this.viewer.removeSectionPlaneWidget();
@@ -353,6 +342,15 @@ export class CameraControl {
             case 1:
                 if (this.dragMode == FLY_MODE) {
                     this.viewer.eventHandler.fire("full_screen_state_changed", true, false);
+                }
+                if (this.orbitInPlanSectionMode) {
+                    this.orbitInPlanSectionMode = false;
+                }
+
+                if (this.planSectionActivated && !this.viewer.sectionPlaneIsDisabled) {
+                    this.dragMode = DRAG_ORBIT;
+                    this.planSectionActivated = false;
+                    this.viewer.eventHandler.fire("plan_Section_Done");
                 }
                 if (dt < 500. && this.closeEnoughCanvas(this.mouseDownPos, this.mousePos)) {
                     if (this.dragMode == FLY_MODE) {
@@ -408,11 +406,12 @@ export class CameraControl {
         if (!this.over) {
             return;
         }
-        if (this.mouseDown || e.ctrlKey) {
+
+        if (this.mouseDown || this.planSectionActivated) {
             this.getCanvasPosFromEvent(e, this.mousePos);
             if (this.dragMode == DRAG_SECTION) {
                 this.viewer.moveSectionPlane({ canvasPos: this.mousePos });
-            } else if (e.ctrlKey) {
+            } else if (this.planSectionActivated && !this.orbitInPlanSectionMode) {
                 this.viewer.positionSectionPlaneWidget({ canvasPos: this.mousePos });
             } else {
 
@@ -480,7 +479,6 @@ export class CameraControl {
     //Mode de rotation de la caméra suivant le PointerLock
     //Le curseur disparait et la caméra bouge en fonction des déplacements de la souris non limités au canvas
     //Désactivé until further notice car la visibilité du curseur est requise pour la sélection
-
     pointerLockChange() {
         var pointerLockElement = document.pointerLockElement ||
             document.mozPointerLockElement ||
@@ -514,12 +512,15 @@ export class CameraControl {
         }
     }
 
+    //Vérification de l'enfoncement d'une des touiches multidirectionnelle pour le déplacement
     updateCameraMovement() {
         var update = false;
         for (var key in this.flyModeKeys)
             update |= this.flyModeKeys[key][0];
         return update;
     }
+
+    //Déplacement de la caméra dans la direction de la touche multidirectionelle active
     moveCamera(deltaTime) {
         if (!this.updateCameraMovement()) return;
 
@@ -542,6 +543,17 @@ export class CameraControl {
             }
         }
 
+    }
+
+    //Activation / Désactivation du mode de section par plan
+    togglePlanSection(active) {
+        this.planSectionActivated = active;
+        this.resetSectionPlan();
+    }
+
+    //Reset de la dernière section par plan
+    resetSectionPlan() {
+        this.viewer.disableSectionPlane();
     }
 
 

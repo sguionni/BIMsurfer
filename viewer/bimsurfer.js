@@ -184,6 +184,17 @@ export class BimSurfer extends EventHandler {
 	}
 
 	/**
+	 * Activate the section plane mode
+	 *
+	 * @param none
+	 * @memberof BimSurfer
+	 */
+	togglePlanSection(bool) {
+		let v = this._bimServerViewer.viewer;
+		return v.togglePlanSection(bool);
+	}
+
+	/**
 	 * Gets a javascript representation of the current camera orientation
 	 *
 	 * @return {{type: String, eye: Float32Array, target: Float32Array, up: Float32Array, fovy: ?Number}} Camera parameters
@@ -245,6 +256,9 @@ export class BimSurfer extends EventHandler {
 	}
 	addFullScreenHandler(handler) {
 		this._bimServerViewer.addFullScreenListener(handler);
+	}
+	addTogglePlanSectionHandler(handler) {
+		this._bimServerViewer.addTogglePlanSectionListener(handler);
 	}
 
 	cleanup() {

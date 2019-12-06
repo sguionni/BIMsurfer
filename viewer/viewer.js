@@ -776,6 +776,9 @@ export class Viewer {
                 this.sectionplanePoly = this.overlay.createWorldSpacePolyline(ps);
             }
         }
+        else {
+            this.removeSectionPlaneWidget();
+        }
     }
 
     enableSectionPlane(params) {
@@ -984,6 +987,7 @@ export class Viewer {
         return new Promise((resolve, reject) => {
             if (ids.length == 0) {
                 this.camera.viewFit(false, false, true);
+                this.cameraControl.resetSectionPlan();
                 this.dirty = 2;
                 resolve();
                 return;
@@ -1002,6 +1006,10 @@ export class Viewer {
                 resolve();
             }
         });
+    }
+
+    togglePlanSection(bool) {
+        this.cameraControl.togglePlanSection(bool);
     }
 
     resetCamera() {
@@ -1029,5 +1037,8 @@ export class Viewer {
     }
     addFullScreenListener(listener) {
         this.eventHandler.on("full_screen_state_changed", listener.handler);
+    }
+    addTogglePlanSectionListener(listener) {
+        this.eventHandler.on("plan_Section_Done", listener.handler);
     }
 }
