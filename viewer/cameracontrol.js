@@ -239,6 +239,16 @@ export class CameraControl {
             if ((e.key in this.flyModeKeys) && !(this.flyModeKeys[e.key][0])) {
                 this.flyModeKeys[e.key][0] = true; //Peut devenir juste arrowleft = true
             }
+            if (e.key === "Escape") {
+                if (this.planSectionActivated) {
+                    this.dragMode = DRAG_ORBIT;
+                    this.planSectionActivated = false;
+                    this.viewer.removeSectionPlaneWidget();
+                    this.resetSectionPlan();
+                    this.viewer.eventHandler.fire("plan_Section_Done");
+                }
+
+            }
             /*
             if ((e.key in this.flyModeKeys) && !(e.key in this.timers)) {
                 this.timers[e.key] = null;
