@@ -239,7 +239,7 @@ export class CameraControl {
             if ((e.key in this.flyModeKeys) && !(this.flyModeKeys[e.key][0])) {
                 this.flyModeKeys[e.key][0] = true; //Peut devenir juste arrowleft = true
             }
-            if (e.key === "Escape") {
+            if (e.key === "Escape" || e.keyCode === 27) {
                 if (this.planSectionActivated) {
                     this.dragMode = DRAG_ORBIT;
                     this.planSectionActivated = false;
